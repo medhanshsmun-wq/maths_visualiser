@@ -3,6 +3,8 @@
  * Uses Canvas API to render vectors, lines, points, and functions with better graphics
  */
 
+import { safeEvaluate } from '../utils/safeEvaluator.js';
+
 let canvas = null;
 let ctx = null;
 let viewConfig = {
@@ -522,32 +524,13 @@ function renderPoint2D(obj, color) {
 }
 
 /**
- * Evaluate mathematical expression
+ * Evaluate mathematical expression using safe evaluator
  */
 function evaluateExpression(expr, vars) {
-    let e = expr.toLowerCase()
-        .replace(/\^/g, '**')
-        .replace(/sin/g, 'Math.sin')
-        .replace(/cos/g, 'Math.cos')
-        .replace(/tan/g, 'Math.tan')
-        .replace(/sqrt/g, 'Math.sqrt')
-        .replace(/abs/g, 'Math.abs')
-        .replace(/log/g, 'Math.log')
-        .replace(/exp/g, 'Math.exp')
-        .replace(/pi/g, 'Math.PI')
-        .replace(/e(?![xp])/g, 'Math.E');
-
-    e = e.replace(/(\d)([a-z])/g, '$1*$2');
-    e = e.replace(/(\))(\()/g, '$1*$2');
-    e = e.replace(/(\d)(\()/g, '$1*$2');
-
     try {
-        const varNames = Object.keys(vars);
-        const varValues = Object.values(vars);
-        const fn = new Function(...varNames, `return ${e}`);
-        const result = fn(...varValues);
-        return isFinite(result) ? result : NaN;
-    } catch {
+        return safeEvaluate(expr, vars);
+    } catch (error) {
+        console.warn('Expression evaluation failed:', error);
         return NaN;
     }
 }

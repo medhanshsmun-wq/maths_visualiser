@@ -3,6 +3,8 @@
  * Renders any surface defined by f(x,y,z) = 0
  */
 
+import { safeEvaluate } from '../utils/safeEvaluator.js';
+
 // Edge table for marching cubes - defines which edges are intersected for each cube configuration
 const EDGE_TABLE = [
     0x0, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
@@ -300,31 +302,13 @@ const TRI_TABLE = [
 ];
 
 /**
- * Evaluate a mathematical expression at given x, y, z coordinates
+ * Evaluate a mathematical expression at given x, y, z coordinates using safe evaluator
  */
 function evaluateImplicit(expr, x, y, z) {
-    let e = expr.toLowerCase()
-        .replace(/\^/g, '**')
-        .replace(/sin/g, 'Math.sin')
-        .replace(/cos/g, 'Math.cos')
-        .replace(/tan/g, 'Math.tan')
-        .replace(/sqrt/g, 'Math.sqrt')
-        .replace(/abs/g, 'Math.abs')
-        .replace(/log/g, 'Math.log')
-        .replace(/exp/g, 'Math.exp')
-        .replace(/pi/g, 'Math.PI')
-        .replace(/e(?![xp])/g, 'Math.E');
-
-    // Handle implicit multiplication
-    e = e.replace(/(\d)([a-z])/g, '$1*$2');
-    e = e.replace(/(\))(\()/g, '$1*$2');
-    e = e.replace(/(\d)(\()/g, '$1*$2');
-
     try {
-        const fn = new Function('x', 'y', 'z', `return ${e}`);
-        const result = fn(x, y, z);
-        return isFinite(result) ? result : NaN;
-    } catch {
+        return safeEvaluate(expr, { x, y, z });
+    } catch (error) {
+        console.warn('Implicit surface evaluation failed:', error);
         return NaN;
     }
 }
