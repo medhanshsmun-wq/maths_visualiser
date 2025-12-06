@@ -1,0 +1,41 @@
+# MathViz AI - Render Blueprint
+# Deploy both frontend and backend with one click
+
+services:
+  # Backend API
+  - type: web
+    name: mathviz-api
+    env: node
+    region: oregon
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
+
+  # Frontend Static Site
+  - type: web
+    name: mathviz-app
+    env: static
+    region: oregon
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: mathviz-api
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL

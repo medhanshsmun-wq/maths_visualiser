@@ -312,6 +312,24 @@ function animate() {
 }
 
 /**
+ * Export the current 3D view as an image
+ * @returns {string|null} Data URL of the image or null if failed
+ */
+export function exportImage() {
+    if (!renderer) return null;
+
+    // Render one frame to ensure buffer is current
+    renderer.render(scene, camera);
+
+    try {
+        return renderer.domElement.toDataURL('image/png');
+    } catch (error) {
+        console.error('Export failed:', error);
+        return null;
+    }
+}
+
+/**
  * Render visualization data
  * @param {object} data - Visualization data with objects array
  * @param {object} options - Render options (plane, animationProgress, animationType)
