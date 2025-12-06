@@ -10,6 +10,7 @@ import { init3D, render3D, dispose3D, resetCamera, toggleAutoRotate } from './en
 import * as Animation from './engine/animationEngine.js';
 import { marked } from 'marked';
 import katex from 'katex';
+import { showSuccess, showError, showWarning, showInfo } from './utils/notifications.js';
 
 // State
 let currentPlane = 'xy'; // xy, xz, yz - plane for 2D objects in 3D space
@@ -565,7 +566,7 @@ function initializeRenderers() {
 function handleSaveApiKey() {
   const key = elements.apiKeyInput.value.trim();
   if (!key) {
-    showError('Please enter a valid API key');
+    showErrorMessage('Please enter a valid API key');
     return;
   }
 
@@ -574,8 +575,10 @@ function handleSaveApiKey() {
     localStorage.setItem('gemini_api_key', key);
     elements.apiModal.classList.add('hidden');
     initializeRenderers();
+    showSuccess('API key configured successfully');
   } catch (error) {
-    showError('Failed to initialize API: ' + error.message);
+    showErrorMessage('Failed to initialize API: ' + error.message);
+    showError('Failed to initialize API. Please check your key.');
   }
 }
 
@@ -586,12 +589,14 @@ async function handleVisualize() {
   const query = elements.queryInput.value.trim();
 
   if (!query && !uploadedFile) {
-    showError('Please enter a query or upload a file');
+    showErrorMessage('Please enter a query or upload a file');
+    showWarning('Enter a math expression or upload a document');
     return;
   }
 
   if (!isInitialized()) {
-    showError('Please configure your API key first');
+    showErrorMessage('Please configure your API key first');
+    showError('API key required');
     elements.apiModal.classList.remove('hidden');
     return;
   }
@@ -603,6 +608,7 @@ async function handleVisualize() {
     let data;
 
     if (uploadedFile) {
+      showInfo('Processing uploaded file...');
       data = await processMultimodalInput(
         uploadedFile.base64,
         uploadedFile.mimeType,
@@ -610,6 +616,10 @@ async function handleVisualize() {
       );
     } else {
       data = await generateVisualization(query);
+    }
+
+    if (!data || !data.objects || data.objects.length === 0) {
+      throw new Error('No visualization data generated');
     }
 
     currentData = data;
@@ -622,9 +632,13 @@ async function handleVisualize() {
       showExplanation(data);
     }
 
+    showSuccess('Visualization created');
+
   } catch (error) {
     console.error('Visualization error:', error);
-    showError(error.message);
+    const errorMsg = error.message || 'Failed to generate visualization';
+    showErrorMessage(errorMsg);
+    showError(errorMsg);
   } finally {
     setLoading(false);
   }
@@ -842,7 +856,9 @@ async function handleFile(file) {
   try {
     uploadedFile = await processFile(file);
     showFilePreview(uploadedFile);
+    showSuccess(`File uploaded: ${file.name}`);
   } catch (error) {
+    showErrorMessage(error.message);
     showError(error.message);
     uploadedFile = null;
   }
@@ -878,7 +894,7 @@ function setLoading(loading) {
   elements.btnLoader.classList.toggle('hidden', !loading);
 }
 
-function showError(message) {
+function showErrorMessage(message) {
   elements.errorMessage.textContent = message;
   elements.errorMessage.classList.remove('hidden');
 }

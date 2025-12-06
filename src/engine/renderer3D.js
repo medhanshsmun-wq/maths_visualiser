@@ -4,6 +4,7 @@
  */
 
 import * as THREE from 'three';
+import { safeEvaluate } from '../utils/safeEvaluator.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { generateImplicitSurfaceMesh } from './marchingCubes.js';
 
@@ -738,33 +739,13 @@ function renderPoint2DIn3D(obj, color, animOptions = {}) {
 }
 
 /**
- * Parse and evaluate a math expression
+ * Parse and evaluate a math expression using safe evaluator
  */
 function evaluateExpression(expr, vars) {
-    let e = expr.toLowerCase()
-        .replace(/\^/g, '**')
-        .replace(/sin/g, 'Math.sin')
-        .replace(/cos/g, 'Math.cos')
-        .replace(/tan/g, 'Math.tan')
-        .replace(/sqrt/g, 'Math.sqrt')
-        .replace(/abs/g, 'Math.abs')
-        .replace(/log/g, 'Math.log')
-        .replace(/exp/g, 'Math.exp')
-        .replace(/pi/g, 'Math.PI')
-        .replace(/e(?![xp])/g, 'Math.E');
-
-    // Handle implicit multiplication: 2x -> 2*x, 3sin -> 3*sin
-    e = e.replace(/(\d)([a-z])/g, '$1*$2');
-    e = e.replace(/(\))(\()/g, '$1*$2');
-    e = e.replace(/(\d)(\()/g, '$1*$2');
-
     try {
-        const varNames = Object.keys(vars);
-        const varValues = Object.values(vars);
-        const fn = new Function(...varNames, `return ${e}`);
-        const result = fn(...varValues);
-        return isFinite(result) ? result : NaN;
-    } catch {
+        return safeEvaluate(expr, vars);
+    } catch (error) {
+        console.warn('Expression evaluation failed:', error);
         return NaN;
     }
 }
