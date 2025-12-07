@@ -152,7 +152,7 @@ COLOR PALETTE:
 export function initializeGemini(apiKey) {
     genAI = new GoogleGenerativeAI(apiKey);
     model = genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-3-pro-preview',
         generationConfig: {
             temperature: 0.3,
             topP: 0.9,
